@@ -146,8 +146,6 @@ axes('Position', [0.1 0.11 0.215 0.325]); hold on
     ylabel(sprintf('PSE_2 (%sA)', GetUnicodeChar('mu')), 'Color', [1 .4 .4])
 
     % add examples
-%     scatter(pse1(e1,2), pse1(e1,3), 60, 'k', 'o', 'LineWidth', 2)
-%     scatter(pse1(e2,2), pse1(e2,3), 60, 'k', 'o', 'LineWidth', 2)
     text(pse1(e1,2)+2, pse1(e1,3)+2, 'B', 'FontWeight', 'bold')
     text(pse1(e2,2)+2, pse1(e2,3)-2, 'C', 'FontWeight', 'bold')
 
@@ -181,7 +179,7 @@ axes('Position', [0.725 0.11 0.215 0.325]); hold on
     ylabel(sprintf('|%sPSE| (%sA)', GetUnicodeChar('Delta'), GetUnicodeChar('mu')))
 
 set(gcf, 'Units', 'inches', ...
-         'Position', [0, 1, 6.4, 4])
+         'Position', [1, 1, 6.4, 4])
 
 AddFigureLabels(gcf, [0.05, -0.015])
 shg
@@ -255,7 +253,7 @@ axes('Position', [0.7 0.1 0.25 0.35]); hold on
 
 AddFigureLabels(gcf, [0.075, 0.01])
 set(gcf, 'Units', 'inches', ...
-         'Position', [-10, 1, 6.4, 4])
+         'Position', [1, 1, 6.4, 4])
 shg
 
 
