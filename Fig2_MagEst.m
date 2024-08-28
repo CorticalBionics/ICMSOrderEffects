@@ -105,8 +105,8 @@ loc_effect = loc_effect ./ loc_effect(:,1,:);
 loc_effect = mean(loc_effect(:,2:end,:), 3);
 % Anova
 tbl = cat(1, loc_cell{:});
-[p,tbl,stats] = anovan(tbl{:,"NormResponse"}, tbl{:,["Same", "Amp2"]},...
-        'varnames', {'CondElec', 'TestAmp'}, 'display', 'on');
+[p,tbl,stats] = anovan(tbl{:,"NormResponse"}, tbl{:,["Same", "Ch2", "Amp2"]},...
+        'varnames', {'CondElec', 'TestElec', 'TestAmp'}, 'display', 'on');
 
 %% Main plot
 clf;

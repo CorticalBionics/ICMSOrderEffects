@@ -3,9 +3,9 @@ addpath(genpath("HelperFunctions"))
 load(fullfile(DataPath(),  'ISIAmpDiscData_Processed.mat'))
 load(fullfile(DataPath(),  'ISIMagEstData_Processed.mat'))
 SetFont('Arial', 9)
-
+subj_list = [ISIAmpDiscData.Subject];
 %% Get summary 1s vs 5s dPSE
-clearvars -except ISIAmpDiscData ISIMagEstData
+clearvars -except ISIAmpDiscData ISIMagEstData subj_list
 %%% ISI 1 second data
 % Make subject colors
 num_ch = length(ISIAmpDiscData);
@@ -21,9 +21,11 @@ for i = 1:num_ch
     dpse5(i) = ISIAmpDiscData(i).ISISigmoidSummary{"5","dPSE"};
 end
 jnd_idx = jnd1 > 40;
+iidx = strcmp(subj_list, 'BCI02')';
 dpse1(jnd_idx) = NaN;
 dpse5(jnd_idx) = NaN;
-[p,h,s] = ranksum(abs(dpse5), abs(dpse1));
+[p,h,s] = signrank(abs(dpse5(iidx)), abs(dpse1(iidx)));
+[a,b,c,d] = vartest2(dpse1(iidx), dpse5(iidx))
 
 %% Other ISIs
 idx = [5, 8, 17, 21];

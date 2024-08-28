@@ -10,19 +10,24 @@ clearvars -except ISIAmpDiscData MechAmpDiscrimData DetectionData ISIAmpDiscMult
 %%% ISI 1 second data
 % Make subject colors
 num_ch = length(ISIAmpDiscData);
-subj_colors = zeros(num_ch, 3);
+subj_list = [ISIAmpDiscData.Subject];
+u_subjs = unique(subj_list);
+num_subj = length(u_subjs);
+subj_colors = zeros(num_ch, num_subj);
 for i = 1:num_ch
     subj_colors(i,:) = SubjectColors(ISIAmpDiscData(i).Subject);
 end
 
 [jnd1, pse1] = deal(zeros(num_ch, 3));
-[djnd1, dpse1, pc2] = deal(zeros(num_ch,1));
+[djnd1, dpse1, pc2, djnd1_p, int2_p] = deal(zeros(num_ch,1));
 for i = 1:num_ch
     jnd1(i,:) = ISIAmpDiscData(i).ISISigmoidSummary{"1","JND"};
     djnd1(i) = ISIAmpDiscData(i).ISISigmoidSummary{"1","dJND"};
     pse1(i,:) = ISIAmpDiscData(i).ISISigmoidSummary{"1","PSE"};
     dpse1(i) = ISIAmpDiscData(i).ISISigmoidSummary{"1","dPSE"} .* -1;
     pc2(i) = ISIAmpDiscData(i).ChoseI2;
+    djnd1_p(i) = ISIAmpDiscData(i).ISISigmoidSummary{"1","dJNDp"};
+    int2_p(i) = ISIAmpDiscData(i).ChoseI2p;
 end
 dpse1_j = dpse1 ./ jnd1(:,1);
 
@@ -32,14 +37,16 @@ for i = 1:length(MechAmpDiscrimData)
     mech_jnd(i) = MechAmpDiscrimData(i).SigmoidSummary{"1", "JND"}{1}(1);
 end
 mech_dpse1_j = mech_dpse1 ./ mech_jnd;
-
 jnd_idx = jnd1(:, 1) < 40;
-[p,h,s] = ranksum(jnd1(jnd_idx, 2), jnd1(jnd_idx, 3));
-[p,h,s] = ranksum(pse1(jnd_idx, 2), pse1(jnd_idx, 3));
+
 int_bias = abs(pc2 - 0.5);
 
-[p,h,s] = ranksum(dpse1_j(jnd_idx), mech_dpse1_j);
-[H,P,CI,STATS] = vartest2(dpse1_j(jnd_idx), mech_dpse1_j);
+iidx = jnd_idx & strcmp(subj_list, 'BCI02')';
+[p,h,s] = signrank(pse1(iidx,2), pse1(iidx,3));
+[p,h,s] = signrank(jnd1(iidx,2), jnd1(iidx,3));
+[p,h,s] = ranksum(dpse1_j(iidx), mech_dpse1_j);
+[H,P,CI,STATS] = vartest2(dpse1_j(iidx), mech_dpse1_j);
+[r,p] = corr(jnd1(iidx,1), abs(dpse1(iidx)));
 
 %%% Detection data
 % Fix subject string
@@ -56,19 +63,21 @@ for i = 1:num_ch
         dts(i) = DetectionData(idx).MeanThreshold;
     end
 end
+[r,p] = corr(dts(iidx), abs(dpse1(iidx)));
+[r,p] = corr(dts(iidx), abs(jnd1(iidx)));
 
 %%% Frequency data
 num_freq_ch = length(ISIAmpDiscMultiFreqData);
-[freq_dpse, freq_djnd, freq_jnd] = deal(zeros(3, num_freq_ch));
+[freq_dpse, freq_djnd, freq_jnd] = deal(zeros(num_freq_ch, 3));
 for c = 1:num_freq_ch
-    freq_dpse(:,c) = ISIAmpDiscMultiFreqData(c).Freq_PSEs.dPSE;
-    freq_djnd(:,c) = ISIAmpDiscMultiFreqData(c).Freq_JNDs.dJND;
-    freq_jnd(:,c) = ISIAmpDiscMultiFreqData(c).Freq_JNDs.JND(:,1);
+    freq_dpse(c,:) = ISIAmpDiscMultiFreqData(c).Freq_PSEs.dPSE;
+    freq_djnd(c,:) = ISIAmpDiscMultiFreqData(c).Freq_JNDs.dJND;
+    freq_jnd(c,:) = ISIAmpDiscMultiFreqData(c).Freq_JNDs.JND(:,1);
 end
 
-[dpse_P,dpse_T,dpse_S] = anova2(freq_dpse);
-[djnd_P,djnd_T,djnd_S] = anova2(freq_djnd);
-[fjnd_P,fjnd_T,fjnd_S] = anova2(freq_jnd);
+[dpse_P,dpse_T,dpse_S] = anova1(freq_dpse);
+[djnd_P,djnd_T,djnd_S] = anova1(freq_djnd);
+[fjnd_P,fjnd_T,fjnd_S] = anova1(freq_jnd);
 
 %% Main plot
 % 2AFC task
@@ -223,9 +232,9 @@ axes('Position', [0.675 0.575 0.25 0.35]); hold on
 
 % dPSE Frequency
 axes('Position', [0.075 0.1 0.25 0.35]); hold on
-    for i = 1:size(freq_dpse, 2)
-        plot([1:size(freq_dpse, 1)], freq_dpse(:,i), 'Color', [.6 .6 .6], 'LineStyle', '--')
-        scatter([1:size(freq_dpse, 1)], freq_dpse(:,i), 50, SubjectColors('BCI02'), 'filled')
+    for i = 1:size(freq_dpse, 1)
+        plot([1:size(freq_dpse, 2)], freq_dpse(i,:), 'Color', [.6 .6 .6], 'LineStyle', '--')
+        scatter([1:size(freq_dpse, 2)], freq_dpse(i,:), 50, SubjectColors('BCI02'), 'filled')
     end
     set(gca, 'XLim', [0.6 3.4], 'XTick', [1:3], 'XTickLabel', {'50', '100', '200'})
     xlabel('Frequency (Hz)')
@@ -233,9 +242,9 @@ axes('Position', [0.075 0.1 0.25 0.35]); hold on
 
 % dJND Frequency
 axes('Position', [0.385 0.1 0.25 0.35]); hold on
-    for i = 1:size(freq_djnd, 2)
-        plot([1:size(freq_djnd, 1)], freq_djnd(:,i), 'Color', [.6 .6 .6], 'LineStyle', '--')
-        scatter([1:size(freq_djnd, 1)], freq_djnd(:,i), 50, SubjectColors('BCI02'), 'filled')
+    for i = 1:size(freq_djnd, 1)
+        plot([1:size(freq_djnd, 2)], freq_djnd(i,:), 'Color', [.6 .6 .6], 'LineStyle', '--')
+        scatter([1:size(freq_djnd, 2)], freq_djnd(i,:), 50, SubjectColors('BCI02'), 'filled')
     end
     set(gca, 'XLim', [0.6 3.4], 'XTick', [1:3], 'XTickLabel', {'50', '100', '200'})
     xlabel('Frequency (Hz)')
@@ -243,9 +252,9 @@ axes('Position', [0.385 0.1 0.25 0.35]); hold on
 
 % JND Frequency
 axes('Position', [0.7 0.1 0.25 0.35]); hold on
-    for i = 1:size(freq_jnd, 2)
-        plot([1:size(freq_jnd, 1)], freq_jnd(:,i), 'Color', [.6 .6 .6], 'LineStyle', '--')
-        scatter([1:size(freq_jnd, 1)], freq_jnd(:,i), 50, SubjectColors('BCI02'), 'filled')
+    for i = 1:size(freq_jnd, 1)
+        plot([1:size(freq_jnd, 2)], freq_jnd(i,:), 'Color', [.6 .6 .6], 'LineStyle', '--')
+        scatter([1:size(freq_jnd, 2)], freq_jnd(i,:), 50, SubjectColors('BCI02'), 'filled')
     end
     set(gca, 'XLim', [0.6 3.4], 'XTick', [1:3], 'XTickLabel', {'50', '100', '200'})
     xlabel('Frequency (Hz)')
