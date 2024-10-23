@@ -164,7 +164,8 @@ axes('Position', [0.2 0.06 0.7 0.175]); hold on
         plot([1,2], loc_effect(i,:), 'Color', [.6 .6 .6], 'LineStyle', ':')
         scatter([1,2], loc_effect(i,:), 50, SubjectColors('BCI02'), 'filled')
     end
-    xlabel('Conditioning Electrode Location')
+    xl = xlabel('Conditioning Electrode Location');
+    
     ylabel('Relative Intensity')
     set(gca, 'XTick', [1:2], ...
              'XLim', [0.5 2.5], ...
@@ -173,7 +174,7 @@ axes('Position', [0.2 0.06 0.7 0.175]); hold on
 
 set(gcf, 'Units', 'inches', ...
          'Position', [1, 1, 2.25, 7])
-
+xl.Position(2) = xl.Position(2) - 0.02;
 AddFigureLabels(gcf, [0.15, 0.0275])
 shg
 
